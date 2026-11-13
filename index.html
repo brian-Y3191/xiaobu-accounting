@@ -265,6 +265,12 @@ nav button span{height:25px;line-height:25px;}
 .merge-import .merge-map select,.merge-import .merge-map input{font-size:13px;padding:8px;width:100%;margin:0;min-width:0;border:1px solid #cbd5e1;border-radius:8px;background:#fff}
 .merge-import #mergeSubmit{margin-top:12px}
 .merge-import .merge-warning{font-size:12px;line-height:1.5;color:#92400e;background:#fffbeb;padding:9px 10px;border-radius:9px}
+
+/* V17: scroll account search results independently from settings page */
+#allList{max-height:700px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;border:1px solid #e2e8f0;border-radius:12px;padding:0 8px;scrollbar-width:thin;}
+#allList .record-item{min-height:70px;}
+#allList .record-item .details small{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;}
+#allList:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
 </style>
 </head>
 <body>
@@ -299,10 +305,10 @@ nav button span{height:25px;line-height:25px;}
          <select id="currency" aria-label="選擇預設或已新增的幣別" title="選擇幣別"></select>
          <input id="newCurrency" type="hidden" value="">
          <input type="number" id="rate" min="0.000001" step="any" inputmode="decimal" placeholder="匯率" aria-label="目前幣別對台幣匯率">
-         <button type="button" class="rate-refresh" onclick="fetchBotRate()" aria-label="查詢台灣銀行現金賣出匯率" title="查詢臺銀匯率">↻</button>
+         <button type="button" class="rate-refresh" onclick="fetchBotRate()" aria-label="重新查詢匯率，臺銀優先，Frankfurter 備援" title="重新取得匯率">↻</button>
        </div>
        <div class="currency-default-row"><span id="currencyDefaultHint" class="hint">點選幣別切換，匯率依每種幣別各自儲存。</span><button type="button" class="currency-default-btn" onclick="rememberDestination()">設為地點預設</button></div>
-       <div id="rateStatus" class="hint" aria-live="polite">自動查詢臺灣銀行牌告，查詢失敗可手動輸入。</div>
+       <div id="rateStatus" class="hint" aria-live="polite">優先臺灣銀行現金賣出，失敗自動改用 Frankfurter 參考匯率，最後可手動輸入。</div>
        <div id="twdCalc" class="hint">換算新台幣：—</div>
      </div>
   <div id="expArea">
@@ -351,12 +357,13 @@ nav button span{height:25px;line-height:25px;}
 <div class="field"><label for="settingsSub">子項目</label><select id="settingsSub"></select></div>
 <div class="row"><input id="settingsSubName" placeholder="新的子項目名稱" maxlength="60"><button type="button" class="btn inline" onclick="renameSubCategory()">改名</button><button type="button" class="btn inline alt" onclick="deleteSubCategory()">移除</button></div>
 <p class="hint">分類仍可從記帳面板「＋」重新新增。資料管理不會刪除任何記帳金額。</p></div>
-<div class="card"><h2>帳目搜尋（<span id="allCount">0</span> 筆）</h2><input id="searchBox" placeholder="搜尋日期、分類、店家、備註"><p class="hint">可搜尋及編輯過去所有帳目</p><div id="allList"></div></div><div class="card"><h2>匯入發票存摺 CSV</h2><p class="hint">支援含日期與金額欄的 CSV；有發票號碼時可跳過重複發票。</p><input type="file" id="csvFile" accept=".csv,text/csv"><button class="btn" onclick="importCSV()">匯入發票</button><div id="importResult" class="hint"></div></div>
+<div class="card"><h2>帳目搜尋（<span id="allCount">0</span> 筆）</h2><input id="searchBox" placeholder="搜尋日期、分類、店家、備註"><p class="hint">可搜尋及編輯過去所有帳目；畫面一次約顯示 10 筆，超過可在清單中上下滑動。</p><div id="allList" role="region" tabindex="0" aria-label="帳目搜尋結果，可上下捲動"></div></div>
 <div class="card merge-import"><h2>小票盒／記帳本 JSON 選擇性合併匯入</h2>
 <p class="hint">先選取小票盒轉換後的 JSON（或小布記帳本 JSON）。勾選要加入的分類或子項目，逐項選擇歸入哪個既有分類；沒有對應的可以保留為新分類。</p>
 <p class="merge-warning">✅ 預設只新增、保留目前所有帳目／自訂分類／圖示／設定。已存在的相同來源紀錄會略過。匯入前仍建議先下載完整 JSON 備份。</p>
 <div class="field"><label for="mergeFile">選擇要合併的 JSON</label><input type="file" id="mergeFile" accept=".json,application/json" onchange="previewMergeFile()"></div>
 <div id="mergePreview" class="hidden"><p id="mergeInfo" class="import-status"></p><div class="import-actions"><button type="button" class="btn alt" onclick="selectMergeGroups(true)">全選</button><button type="button" class="btn alt" onclick="selectMergeGroups(false)">全不選</button></div><div class="merge-table" id="mergeGroups"></div><button type="button" class="btn" id="mergeSubmit" onclick="commitMergeImport()">合併勾選帳目（保留原資料）</button><p class="import-status" id="mergeResult" role="status"></p></div></div><div class="card"><h2>備份與匯出資料</h2><p class="hint">JSON 備份可完整保存子分類、匯率、分期資訊、預算及帳目。CSV 可用 Excel 開啟。請定期將備份存到手機檔案或雲端硬碟。</p><button class="btn" onclick="exportBackup()">下載完整 JSON 備份</button><button class="btn alt" onclick="exportCSV()">匯出全部帳目 CSV（Excel 可開啟）</button><div class="field"><label>選取 JSON 備份來還原</label><input type="file" id="backupFile" accept=".json,application/json"></div><button class="btn alt" onclick="importBackup()">整份覆蓋還原（會取代現有資料，慎用）</button></div>
+<div class="card" id="versionInfoCard"><h2>程式版本資訊</h2><div class="item"><div><strong>小布記帳本</strong><small>目前安裝版本</small></div><strong>V18</strong></div><p class="hint">更新日期：2026/11/14。更新功能：臺灣銀行匯率查詢失敗時自動使用 Frankfurter 參考匯率，並保留各幣別手動備援與匯率來源。</p><p class="hint">更新前請先匯出完整 JSON 備份。GitHub Pages 的程式更新通常不會清除本機資料，但不保證資料永不遺失。</p></div>
 <div class="card"><h2>長期使用提醒</h2><p class="hint">資料保存在此裝置、此瀏覽器的 localStorage，並非雲端。清除網站資料可能失去紀錄。若在 HTTPS 網址開啟本程式，可以加入手機主畫面並使用離線快取；單獨開啟 HTML 檔案不保證可安裝為 PWA。不同手機使用各自的瀏覽器儲存空間，記帳及統計互不影響；不會自動同步。</p><p class="hint">店家分類記憶：<span id="ruleCount">0</span> 家</p><div id="ruleList" class="hint"></div></div></section>
 <div id="categoryActionModal" class="cat-confirm-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="categoryActionHeading"><div class="cat-confirm-sheet"><h2 id="categoryActionHeading">確認分類操作</h2><p id="categoryActionMessage"></p><div class="cat-confirm-buttons"><button type="button" class="btn alt" id="catActionCancel">取消</button><button type="button" class="btn" id="catActionOK">確定</button></div></div></div>
 <div id="dateWheelModal" class="wheel-modal hidden" role="dialog" aria-modal="true" aria-label="滾輪選擇記帳日期"><div class="wheel-sheet"><div class="wheel-head"><button type="button" onclick="closeDateWheel()">取消</button><strong>選擇記帳日期</strong><button type="button" onclick="commitDateWheel()">完成</button></div><div class="wheel-fields"><div class="wheel-col"><span>年</span><div id="wheelYear" class="wheel-scroll" aria-label="年份"></div></div><div class="wheel-col"><span>月</span><div id="wheelMonth" class="wheel-scroll" aria-label="月份"></div></div><div class="wheel-col"><span>日</span><div id="wheelDay" class="wheel-scroll" aria-label="日期"></div></div></div><p id="wheelPreview" class="hint" style="text-align:center"></p></div></div>
@@ -369,7 +376,7 @@ const COLORS=['#2563eb','#ef4444','#f59e0b','#10b981','#8b5cf6','#ec4899','#0ea5
 const CHILD_CATS=['教育','娛樂','禮物'];
 function safeLoad(){try{return JSON.parse(localStorage.getItem('kj_db')||'{}')}catch(e){alert('記帳資料讀取異常，請勿新增紀錄覆蓋舊資料。請先備份瀏覽器資料。');return null}}
 let db=safeLoad();if(!db)throw Error('Database decode failed');
-db.records=Array.isArray(db.records)?db.records:[];db.rules=db.rules||{};db.budget=db.budget||0;db.incNames=Array.isArray(db.incNames)?db.incNames:[];db.childNames=db.childNames||{'甯甯':[],'小宇':[]};db.travelNames=Array.isArray(db.travelNames)?db.travelNames:[];db.customCats=Array.isArray(db.customCats)?db.customCats:[];db.subNames=db.subNames&&typeof db.subNames==='object'?db.subNames:{};db.destinations=db.destinations&&typeof db.destinations==='object'?db.destinations:{};db.rateCache=db.rateCache||{};db.merchantIds=db.merchantIds||{};db.customCurrencies=Array.isArray(db.customCurrencies)?db.customCurrencies:[];db.manualRates=db.manualRates&&typeof db.manualRates==='object'?db.manualRates:{};db.hiddenCats=Array.isArray(db.hiddenCats)?db.hiddenCats:[];db.prepayCat=db.prepayCat||'預付';db.catIcons=db.catIcons&&typeof db.catIcons==='object'?db.catIcons:{};db.appTitle=typeof db.appTitle==='string'&&db.appTitle.trim()?db.appTitle:'小布記帳本';
+db.records=Array.isArray(db.records)?db.records:[];db.rules=db.rules||{};db.budget=db.budget||0;db.incNames=Array.isArray(db.incNames)?db.incNames:[];db.childNames=db.childNames||{'甯甯':[],'小宇':[]};db.travelNames=Array.isArray(db.travelNames)?db.travelNames:[];db.customCats=Array.isArray(db.customCats)?db.customCats:[];db.subNames=db.subNames&&typeof db.subNames==='object'?db.subNames:{};db.destinations=db.destinations&&typeof db.destinations==='object'?db.destinations:{};db.rateCache=db.rateCache||{};db.merchantIds=db.merchantIds||{};db.customCurrencies=Array.isArray(db.customCurrencies)?db.customCurrencies:[];db.manualRates=db.manualRates&&typeof db.manualRates==='object'?db.manualRates:{};db.rateMeta=db.rateMeta&&typeof db.rateMeta==='object'?db.rateMeta:{};db.hiddenCats=Array.isArray(db.hiddenCats)?db.hiddenCats:[];db.prepayCat=db.prepayCat||'預付';db.catIcons=db.catIcons&&typeof db.catIcons==='object'?db.catIcons:{};db.appTitle=typeof db.appTitle==='string'&&db.appTitle.trim()?db.appTitle:'小布記帳本';
 for(const c of ['甯甯','小宇'])if(!Array.isArray(db.childNames[c]))db.childNames[c]=[];for(const [k,v] of Object.entries(db.childNames))if(!db.subNames[k]&&Array.isArray(v))db.subNames[k]=v.slice();
 (function migrate(){const map={'早餐':'餐食','午餐':'餐食','晚餐':'餐食','咖啡飲料':'餐食','購物':'日常生活','居家':'日常生活','醫療':'日常生活','學習':'日常生活','其他支出':'日常生活'};let changed=false;db.records.forEach(r=>{if(r.type==='expense'&&map[r.cat]){r.cat=map[r.cat];changed=true}if(r.type==='income'&&r.cat==='薪資收入'){r.cat='薪水';changed=true}});Object.keys(db.rules).forEach(k=>{if(map[db.rules[k]]){db.rules[k]=map[db.rules[k]];changed=true}});if(changed)localStorage.setItem('kj_db',JSON.stringify(db))})();
 let curType='expense',selCat='餐食',selChild='',editingId=null,editingGroup=null,curMonth=localToday().slice(0,7),region='tw';
@@ -430,7 +437,15 @@ function childMeta(){return selChild||''}
 function readEntry(){let date=selectedDate();if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){toast('請選有效日期');return null}if(curType==='income'){let name=$('incName').value.trim(),amount=amountValue();if(!name||!Number.isFinite(amount)||amount<=0){toast('請輸入收入名稱與有效金額');return null}return {date,amount,cat:name,store:'',type:'income',source:'manual'}}
 let travel=region==='abroad',isInstall=$('installEnabled').checked,subcat=childMeta(),store=$('store').value.trim(),destination=$('destination').value.trim(),currency=$('currency').value.trim().toUpperCase(),rate=Number($('rate').value),foreignAmount=isInstall?null:amountValue();
 if(travel&&(!destination||!/^[A-Z]{3}$/.test(currency)||!Number.isFinite(rate)||rate<=0||(!isInstall&&(!Number.isFinite(foreignAmount)||foreignAmount<=0)))){toast('請填完整出國地點、幣別、匯率'+(isInstall?'':'和當地消費金額'));return null}
-let activityDate=selCat===db.prepayCat?$('activityDate').value:'';if(selCat===db.prepayCat&&!/^\d{4}-\d{2}-\d{2}$/.test(activityDate)){toast('預付項目請設定活動開始日期');return null}let base={date,cat:selCat,subcat,store,activityDate,type:'expense',source:'manual',region:travel?'abroad':'tw'};if(travel)Object.assign(base,isInstall?{destination,currency,rate}:{destination,currency,rate,foreignAmount});
+let activityDate=selCat===db.prepayCat?$('activityDate').value:'';if(selCat===db.prepayCat&&!/^\d{4}-\d{2}-\d{2}$/.test(activityDate)){toast('預付項目請設定活動開始日期');return null}let base={date,cat:selCat,subcat,store,activityDate,type:'expense',source:'manual',region:travel?'abroad':'tw'};if(travel){
+  const m=db.rateMeta[currency];
+  const currentMatches=m&&Math.abs(Number(m.rate)-rate)<1e-10;
+  const prior=editingId?db.records.find(x=>x.id===editingId):null;
+  const unchanged=prior&&prior.currency===currency&&Math.abs(Number(prior.rate)-rate)<1e-10;
+  const rateSource=unchanged&&prior.rateSource?prior.rateSource:(currentMatches?m.source:'manual');
+  const rateDate=unchanged&&prior.rateDate?prior.rateDate:(currentMatches?m.date:localToday());
+  Object.assign(base,isInstall?{destination,currency,rate,rateSource,rateDate}:{destination,currency,rate,rateSource,rateDate,foreignAmount});
+}
 if(isInstall){let total=Number($('installTotal').value),count=Number($('installCount').value),name=[selCat,subcat].filter(Boolean).join('／');if(!Number.isSafeInteger(total)||total<1||!Number.isSafeInteger(count)||count<2||count>120||total<count){toast('請輸入有效的分期總額與期數');return null}return {base,install:{name,total,count}}}
 let amount=travel?Math.round(rate*foreignAmount):amountValue();if(!Number.isFinite(amount)||amount<=0){toast('金額必須大於零');return null}return {...base,amount}}
 function makeInstallments(base,inst,group){let each=Math.floor(inst.total/inst.count);return Array.from({length:inst.count},(_,i)=>({...base,id:uid(),date:plusMonths(base.date,i),amount:i===inst.count-1?inst.total-each*(inst.count-1):each,installment:{group,index:i+1,count:inst.count,total:inst.total,name:inst.name,startDate:base.date}}))}
@@ -586,11 +601,10 @@ function render(){refreshAppTitle();renderMonths();renderSummary();renderRecent(
 function parseCSV(s){let rows=[],row=[],cur='',quoted=false;for(let i=0;i<s.length;i++){let c=s[i];if(quoted){if(c==='"'){if(s[i+1]==='"'){cur+='"';i++}else quoted=false}else cur+=c}else if(c==='"')quoted=true;else if(c===','){row.push(cur);cur=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&s[i+1]==='\n')i++;row.push(cur);cur='';if(row.some(x=>x.trim()))rows.push(row);row=[]}else cur+=c}if(cur||row.length){row.push(cur);rows.push(row)}return rows}
 function normDate(s){s=String(s||'').trim().replace(/\//g,'-');let m=s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;m=s.match(/^(\d{4})(\d{2})(\d{2})/);return m?`${m[1]}-${m[2]}-${m[3]}`:null}
 function guessCat(store){if(db.rules[store])return db.rules[store];for(const [re,c] of [[/咖啡|星巴克|路易莎|茶|飲|手搖|50嵐|清心|早餐|麥當勞|麵包|餐|麵|飯|鍋|壽司|便當/i,'餐食'],[/捷運|公車|高鐵|台鐵|客運|停車|加油|中油|計程車|uber/i,'交通'],[/UNIQLO|NET|GU|服飾|衣|鞋|包|ZARA|H&M/i,'衣服'],[/電影|威秀|遊戲|steam|netflix|KTV|遊樂/i,'娛樂'],[/花店|禮品|禮盒|禮券|蛋糕/i,'贈禮']])if(re.test(store))return c;return '日常生活'}
-function importCSV(){let f=$('csvFile').files[0];if(!f){toast('請先選 CSV 檔');return}let rd=new FileReader();rd.onload=e=>{let content=String(e.target.result||'').replace(/^\ufeff/,'');let rows=parseCSV(content);if(rows.length<2){$('importResult').textContent='CSV 沒有可匯入資料';return}let head=rows[0].map(s=>s.trim()),find=(...terms)=>head.findIndex(h=>terms.some(t=>h.includes(t))),iNo=find('發票號碼','發票編號'),iDate=find('日期','時間'),iStore=find('店家','賣方','商店','店名'),iAmt=find('金額','總計','消費');if(iDate<0||iAmt<0){$('importResult').textContent='無法辨識「日期」或「金額」欄，偵測到：'+head.join('、');return}let seen=new Set(db.records.filter(r=>r.invNo).map(r=>r.invNo)),add=0,dup=0,bad=0;for(let i=1;i<rows.length;i++){let row=rows[i],date=normDate(row[iDate]),amount=Number(String(row[iAmt]||'').replace(/[,\s$]/g,''));if(!date||!Number.isFinite(amount)||!amount){bad++;continue}let no=iNo>=0?String(row[iNo]||'').trim():'';if(no&&seen.has(no)){dup++;continue}let store=iStore>=0?String(row[iStore]||'').trim():'';db.records.push({id:uid(),date,amount:Math.abs(amount),cat:guessCat(store),store,type:'expense',source:'invoice',invNo:no});if(no)seen.add(no);add++}if(save()){render();$('importResult').textContent=`✅ 新增 ${add} 筆；🔁 重複 ${dup} 筆；⚠️ 無法辨識 ${bad} 筆`}};rd.readAsText(f,'UTF-8')}
 function download(name,contents,type){let a=document.createElement('a'),url=URL.createObjectURL(new Blob([contents],{type}));a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
 function exportBackup(){download(`小布記帳本完整備份_${localToday()}.json`,JSON.stringify(db,null,2),'application/json;charset=utf-8')}
 function csvCell(v){let s=String(v??'');if(/^[=+@\-\t\r]/.test(s)&&!/^-?\d+(\.\d+)?$/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
-function exportCSV(){let keys=['date','type','cat','subcat','amount','store','activityDate','travelName','destination','currency','rate','foreignAmount','installment.name','installment.index','installment.count','installment.total','source','invNo'],head=['日期','收支','分類','子項目','台幣金額','店家備註','活動開始日期','出國費用項目','出國地點','幣別','台幣匯率','當地金額','分期名稱','第幾期','總期數','分期總額','來源','發票號碼'];let rows=[head,...db.records.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(r=>keys.map(k=>{let v=k.startsWith('installment.')?r.installment?.[k.split('.')[1]]:r[k];return k==='type'?(v==='income'?'收入':'支出'):v??''}))];download(`小布記帳本全部帳目_${localToday()}.csv`,'\ufeff'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8')}
+function exportCSV(){let keys=['date','type','cat','subcat','amount','store','activityDate','travelName','destination','currency','rate','foreignAmount','installment.name','installment.index','installment.count','installment.total','source','invNo','rateSource','rateDate'],head=['日期','收支','分類','子項目','台幣金額','店家備註','活動開始日期','出國費用項目','出國地點','幣別','台幣匯率','當地金額','分期名稱','第幾期','總期數','分期總額','來源','發票號碼','匯率來源','匯率資料日期'];let rows=[head,...db.records.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(r=>keys.map(k=>{let v=k.startsWith('installment.')?r.installment?.[k.split('.')[1]]:r[k];return k==='type'?(v==='income'?'收入':'支出'):v??''}))];download(`小布記帳本全部帳目_${localToday()}.csv`,'\ufeff'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8')}
 
 /* V16 selective import: selection, category mapping, preservation, deduplication. */
 let pendingMergeData=null;
@@ -730,22 +744,107 @@ function destinationCurrency(s){if(db.destinations[s])return db.destinations[s];
 function knownCurrencies(){return [...new Set(['TWD',...COUNTRY_CURRENCIES.map(x=>x[1]),...db.customCurrencies,...Object.values(db.destinations),...Object.keys(db.manualRates)])].filter(x=>/^[A-Z]{3}$/.test(x))}
 function fillDestinations(){$('destinationOptions').innerHTML=Object.keys(db.destinations).map(s=>`<option value="${esc(s)}"></option>`).join('');const selected=$('currency').value;const list=knownCurrencies();$('currency').innerHTML=list.map(c=>`<option value="${esc(c)}">${esc(c)}${c===destinationCurrency($('destination').value.trim())?'（地點預設）':''}</option>`).join('');$('currency').value=list.includes(selected)?selected:(destinationCurrency($('destination').value.trim())||'JPY')}
 let rateRequestToken=0;
-function setCurrency(c){c=String(c||'').toUpperCase();if(!/^[A-Z]{3}$/.test(c))return;const prev=$('currency').value;if(!knownCurrencies().includes(c))db.customCurrencies.push(c);fillDestinations();$('currency').value=c;
-// Important: never borrow another currency's FX rate.
-$('rate').value='';const manual=Number(db.manualRates[c]);const cached=Number(db.rateCache[localToday()+':'+c]);if(c==='TWD'){$('rate').value='1';$('rateStatus').textContent='新台幣：1 TWD = NT$1'}else if(cached>0){$('rate').value=cached;$('rateStatus').textContent=`${c} 今日臺銀行牌告快取，請確認牌告日期`}else if(manual>0){$('rate').value=manual;$('rateStatus').textContent=`${c} 已載入此幣別手動匯率（非當日銀行牌告）`}else $('rateStatus').textContent=`${c} 尚無匯率，請查詢臺銀或手動輸入`;
-lastRateCurrency=c;rateRequestToken++;if($('currencyDefaultHint'))$('currencyDefaultHint').textContent='目前幣別：'+c+'；可在選單中切換其他幣別。';updateForm();calcForeign();if(c!=='TWD'&&!cached)fetchBotRate()}
+function useCurrencyRate(c,rate,source,date,description,cache=true){
+  const value=Number(rate);
+  if(!Number.isFinite(value)||value<=0)return false;
+  $('rate').value=String(value);
+  db.rateMeta[c]={source,date:date||localToday(),rate:value,description:description||source};
+  if(cache)db.rateCache[localToday()+':'+c]=value;
+  save();calcForeign();
+  return true;
+}
+function setCurrency(c){c=String(c||'').toUpperCase();if(!/^[A-Z]{3}$/.test(c))return;
+  if(!knownCurrencies().includes(c))db.customCurrencies.push(c);
+  fillDestinations();$('currency').value=c;
+  // 不可沿用別的幣別的匯率。
+  $('rate').value='';
+  const manual=Number(db.manualRates[c]);
+  const cached=Number(db.rateCache[localToday()+':'+c]);
+  const meta=db.rateMeta[c];
+  if(c==='TWD'){
+    $('rate').value='1';db.rateMeta.TWD={source:'fixed',date:localToday(),rate:1,description:'新台幣'};
+    $('rateStatus').textContent='新台幣：1 TWD = NT$1';
+  }else if(cached>0){
+    $('rate').value=String(cached);
+    const same=meta&&Number(meta.rate)===cached;
+    $('rateStatus').textContent=same?`${c} 已載入${meta.description||meta.source}匯率（${meta.date||'日期不詳'}），可重新查詢`:`${c} 已載入本機匯率快取，請按 ↻ 更新來源及日期`;
+  }else if(manual>0){
+    $('rate').value=String(manual);
+    db.rateMeta[c]={source:'manual',date:localToday(),rate:manual,description:'手動設定'};
+    $('rateStatus').textContent=`${c} 已載入此幣別手動匯率，可按 ↻ 查詢最新參考匯率`;
+  }else $('rateStatus').textContent=`${c} 尚無匯率，正在嘗試取得…`;
+  lastRateCurrency=c;rateRequestToken++;
+  if($('currencyDefaultHint'))$('currencyDefaultHint').textContent='目前幣別：'+c+'；可在選單切換其他幣別。';
+  updateForm();calcForeign();
+  if(c!=='TWD'&&!cached)fetchBotRate();
+}
 function addCurrency(){let c=$('newCurrency').value.trim().toUpperCase();if(!/^[A-Z]{3}$/.test(c)){toast('請輸入三碼英文字母幣別');return}if(!db.customCurrencies.includes(c))db.customCurrencies.push(c);$('newCurrency').value='';save();setCurrency(c);rememberLocationPreference();toast('已新增並選用 '+c+'，下次可直接從選單點選')}
 function rememberDestination(){let d=$('destination').value.trim(),c=$('currency').value.trim().toUpperCase();if(!d||!/^[A-Z]{3}$/.test(c)){toast('請輸入地點及三碼幣別');return}db.destinations[d]=c;save();fillDestinations();toast('地點預設幣別已保存')}
 $('destination').addEventListener('change',()=>{let d=$('destination').value.trim(),c=destinationCurrency(d);if(c)setCurrency(c)});
 $('currency').addEventListener('change',()=>{setCurrency($('currency').value);rememberLocationPreference()});fillDestinations();
 let lastRateCurrency='';
-$('rate').addEventListener('change',()=>{const c=$('currency').value,rate=Number($('rate').value);if(c&&Number.isFinite(rate)&&rate>0){rateRequestToken++;db.manualRates[c]=rate;save();$('rateStatus').textContent=`已儲存 ${c} 的手動匯率：1 ${c} = NT$ ${rate}`}});
-/* Official source: https://rate.bot.com.tw/xrt/flcsv/0/day; browser CORS may block cross-origin requests. */
-async function fetchBotRate(){const c=$('currency').value.trim().toUpperCase();if(!c)return;const token=++rateRequestToken;lastRateCurrency=c;if(c==='TWD'){$('rate').value='1';calcForeign();return}const key=localToday()+':'+c;
-$('rateStatus').textContent=`正在查詢臺灣銀行 ${c} 當日現金賣出匯率…`;
-try{let ctrl=new AbortController(),tm=setTimeout(()=>ctrl.abort(),8500),resp;try{resp=await fetch('https://rate.bot.com.tw/xrt/flcsv/0/day',{cache:'no-store',signal:ctrl.signal})}finally{clearTimeout(tm)}if(!resp.ok)throw Error('HTTP '+resp.status);let raw=await resp.text(),rows=parseCSV(raw.replace(/^\ufeff/,''));let row=rows.find(r=>String(r[0]).trim().toUpperCase()===c);if(!row)throw Error('找不到幣別');let h=rows[0].map(x=>x.trim());let idx=h.findIndex(x=>x.includes('現金')&&x.includes('賣出'));if(idx<0)idx=3;let v=Number(row[idx]);if(!Number.isFinite(v)||v<=0)throw Error('無有效牌價');if(token!==rateRequestToken||$('currency').value!==c)return;
-$('rate').value=v;db.rateCache[key]=v;save();calcForeign();$('rateStatus').textContent=`✅ ${localToday()} 臺銀 ${c} 現金賣出 1 ${c} = NT$ ${v}（不是信用卡實際結算價）`}
-catch(e){if(token!==rateRequestToken||$('currency').value!==c)return;$('rateStatus').innerHTML=`⚠️ ${esc(c)} 牌告無法自動取得（可能受跨網域限制）。請手動輸入此幣別匯率；可<a href="https://rate.bot.com.tw/xrt?Lang=zh-tw" target="_blank" rel="noopener">查詢臺灣銀行</a>。`;}}
+$('rate').addEventListener('change',()=>{
+  const c=$('currency').value.trim().toUpperCase(),rate=Number($('rate').value);
+  if(c&&Number.isFinite(rate)&&rate>0){
+    rateRequestToken++;
+    db.manualRates[c]=rate;
+    db.rateMeta[c]={source:'manual',date:localToday(),rate,description:'手動設定'};
+    save();calcForeign();
+    $('rateStatus').textContent=`✍️ 已儲存 ${c} 手動匯率：1 ${c} = NT$ ${rate}（各幣別獨立保存）`;
+  }
+});
+/* 臺灣銀行現金賣出優先；公開網站可能封鎖跨網域讀取。 */
+async function fetchBotRate(){
+  const c=$('currency').value.trim().toUpperCase();if(!/^[A-Z]{3}$/.test(c))return;
+  const token=++rateRequestToken;lastRateCurrency=c;
+  if(c==='TWD'){useCurrencyRate(c,1,'fixed',localToday(),'新台幣',false);$('rateStatus').textContent='1 TWD = NT$1';return}
+  $('rateStatus').textContent=`正在查詢臺灣銀行 ${c} 現金賣出匯率…`;
+  try{
+    const ctrl=new AbortController(),tm=setTimeout(()=>ctrl.abort(),6500);
+    let resp;try{resp=await fetch('https://rate.bot.com.tw/xrt/flcsv/0/day',{cache:'no-store',signal:ctrl.signal})}finally{clearTimeout(tm)}
+    if(!resp.ok)throw Error('臺銀 HTTP '+resp.status);
+    const raw=await resp.text(),rows=parseCSV(raw.replace(/^\ufeff/,''));
+    const row=rows.find(r=>String(r[0]).trim().toUpperCase()===c);
+    if(!row)throw Error('臺銀無此幣別');
+    const h=rows[0].map(x=>x.trim());let idx=h.findIndex(x=>x.includes('現金')&&x.includes('賣出'));
+    if(idx<0)idx=3;
+    const value=Number(row[idx]);if(!Number.isFinite(value)||value<=0)throw Error('臺銀無有效報價');
+    if(token!==rateRequestToken||$('currency').value!==c)return;
+    useCurrencyRate(c,value,'bot-cash-sell',localToday(),'臺灣銀行現金賣出');
+    $('rateStatus').textContent=`✅ 臺銀現金賣出 | ${localToday()} | 1 ${c} = NT$ ${value}（非信用卡結算價）`;
+  }catch(err){
+    if(token!==rateRequestToken||$('currency').value!==c)return;
+    await fetchFrankfurterFallback(c,token);
+  }
+}
+/* Frankfurter v2: https://api.frankfurter.dev/v2/rate/{base}/{quote}
+   回傳 {date,base,quote,rate}，為市場中間價，不等同臺銀賣出牌價。 */
+async function fetchFrankfurterFallback(c,token){
+  $('rateStatus').textContent=`臺銀無法取得，正在透過 Frankfurter 查詢 ${c} → TWD 參考匯率…`;
+  try{
+    const ctrl=new AbortController(),tm=setTimeout(()=>ctrl.abort(),9000);
+    let resp;try{resp=await fetch(`https://api.frankfurter.dev/v2/rate/${encodeURIComponent(c)}/TWD`,{cache:'no-store',signal:ctrl.signal,headers:{'Accept':'application/json'}})}finally{clearTimeout(tm)}
+    if(!resp.ok)throw Error('Frankfurter HTTP '+resp.status);
+    const data=await resp.json();
+    const value=Number(data.rate);
+    if(!Number.isFinite(value)||value<=0||String(data.base||'').toUpperCase()!==c||String(data.quote||'').toUpperCase()!=='TWD')throw Error('匯率資料格式異常');
+    const date=/^\d{4}-\d{2}-\d{2}$/.test(data.date||'')?data.date:localToday();
+    if(token!==rateRequestToken||$('currency').value!==c)return;
+    useCurrencyRate(c,value,'frankfurter',date,'Frankfurter 參考中間價');
+    $('rateStatus').textContent=`✅ Frankfurter 參考匯率 | 資料日 ${date} | 1 ${c} = NT$ ${value}（非臺銀賣出／非即時交易價）`;
+  }catch(err){
+    if(token!==rateRequestToken||$('currency').value!==c)return;
+    const manual=Number(db.manualRates[c]);
+    if(Number.isFinite(manual)&&manual>0){
+      useCurrencyRate(c,manual,'manual',localToday(),'手動設定',false);
+      $('rateStatus').textContent=`⚠️ 兩個自動來源均無法取得，已使用 ${c} 上次儲存的手動匯率：NT$ ${manual}；請確認是否仍適用。`;
+    }else{
+      // 不保留未驗證的其他幣別匯率；若本幣別先前已有欄位值，保留並提示。
+      const existing=Number($('rate').value);
+      $('rateStatus').textContent=existing>0?`⚠️ 目前無法自動更新 ${c}，顯示的是舊快取匯率，請檢查或手動修正。`:`⚠️ 臺銀及 Frankfurter 均無法取得 ${c} 匯率，請手動輸入。`;
+    }
+  }
+}
 if('serviceWorker' in navigator&&location.protocol!=='file:')window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
 </script>
 </body></html>
