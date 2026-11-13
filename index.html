@@ -247,6 +247,24 @@ nav button span{height:25px;line-height:25px;}
  .entry-top{grid-template-columns:minmax(0,1.02fr) minmax(0,1fr);}
 }
 
+
+/* V16: safe selective merge import from ReceiptBox / app JSON */
+.merge-import .import-status{font-size:12px;color:#64748b;line-height:1.6;margin:8px 0}
+.merge-import .import-actions{display:flex;gap:8px;margin:10px 0}
+.merge-import .import-actions button{flex:1}
+.merge-import .merge-table{max-height:390px;overflow-y:auto;overscroll-behavior:contain;border:1px solid #e2e8f0;border-radius:12px}
+.merge-import .merge-group{padding:10px;border-bottom:1px solid #e2e8f0}
+.merge-import .merge-group:last-child{border-bottom:0}
+.merge-import .merge-title{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.merge-import .merge-title input[type=checkbox]{width:20px;height:20px;flex:0 0 20px;min-width:20px;margin:0}
+.merge-import .merge-title label{font-size:13px;font-weight:700;flex:1;min-width:0;overflow-wrap:anywhere}
+.merge-import .merge-title small{font-size:11px;color:#64748b;white-space:nowrap}
+.merge-import .merge-map{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.merge-import .merge-map .field{margin:0}
+.merge-import .merge-map label{font-size:11px;color:#64748b;display:block;margin-bottom:4px}
+.merge-import .merge-map select,.merge-import .merge-map input{font-size:13px;padding:8px;width:100%;margin:0;min-width:0;border:1px solid #cbd5e1;border-radius:8px;background:#fff}
+.merge-import #mergeSubmit{margin-top:12px}
+.merge-import .merge-warning{font-size:12px;line-height:1.5;color:#92400e;background:#fffbeb;padding:9px 10px;border-radius:9px}
 </style>
 </head>
 <body>
@@ -334,7 +352,11 @@ nav button span{height:25px;line-height:25px;}
 <div class="row"><input id="settingsSubName" placeholder="新的子項目名稱" maxlength="60"><button type="button" class="btn inline" onclick="renameSubCategory()">改名</button><button type="button" class="btn inline alt" onclick="deleteSubCategory()">移除</button></div>
 <p class="hint">分類仍可從記帳面板「＋」重新新增。資料管理不會刪除任何記帳金額。</p></div>
 <div class="card"><h2>帳目搜尋（<span id="allCount">0</span> 筆）</h2><input id="searchBox" placeholder="搜尋日期、分類、店家、備註"><p class="hint">可搜尋及編輯過去所有帳目</p><div id="allList"></div></div><div class="card"><h2>匯入發票存摺 CSV</h2><p class="hint">支援含日期與金額欄的 CSV；有發票號碼時可跳過重複發票。</p><input type="file" id="csvFile" accept=".csv,text/csv"><button class="btn" onclick="importCSV()">匯入發票</button><div id="importResult" class="hint"></div></div>
-<div class="card"><h2>備份與匯出資料</h2><p class="hint">JSON 備份可完整保存子分類、匯率、分期資訊、預算及帳目。CSV 可用 Excel 開啟。請定期將備份存到手機檔案或雲端硬碟。</p><button class="btn" onclick="exportBackup()">下載完整 JSON 備份</button><button class="btn alt" onclick="exportCSV()">匯出全部帳目 CSV（Excel 可開啟）</button><div class="field"><label>選取 JSON 備份來還原</label><input type="file" id="backupFile" accept=".json,application/json"></div><button class="btn alt" onclick="importBackup()">還原備份（覆蓋目前資料）</button></div>
+<div class="card merge-import"><h2>小票盒／記帳本 JSON 選擇性合併匯入</h2>
+<p class="hint">先選取小票盒轉換後的 JSON（或小布記帳本 JSON）。勾選要加入的分類或子項目，逐項選擇歸入哪個既有分類；沒有對應的可以保留為新分類。</p>
+<p class="merge-warning">✅ 預設只新增、保留目前所有帳目／自訂分類／圖示／設定。已存在的相同來源紀錄會略過。匯入前仍建議先下載完整 JSON 備份。</p>
+<div class="field"><label for="mergeFile">選擇要合併的 JSON</label><input type="file" id="mergeFile" accept=".json,application/json" onchange="previewMergeFile()"></div>
+<div id="mergePreview" class="hidden"><p id="mergeInfo" class="import-status"></p><div class="import-actions"><button type="button" class="btn alt" onclick="selectMergeGroups(true)">全選</button><button type="button" class="btn alt" onclick="selectMergeGroups(false)">全不選</button></div><div class="merge-table" id="mergeGroups"></div><button type="button" class="btn" id="mergeSubmit" onclick="commitMergeImport()">合併勾選帳目（保留原資料）</button><p class="import-status" id="mergeResult" role="status"></p></div></div><div class="card"><h2>備份與匯出資料</h2><p class="hint">JSON 備份可完整保存子分類、匯率、分期資訊、預算及帳目。CSV 可用 Excel 開啟。請定期將備份存到手機檔案或雲端硬碟。</p><button class="btn" onclick="exportBackup()">下載完整 JSON 備份</button><button class="btn alt" onclick="exportCSV()">匯出全部帳目 CSV（Excel 可開啟）</button><div class="field"><label>選取 JSON 備份來還原</label><input type="file" id="backupFile" accept=".json,application/json"></div><button class="btn alt" onclick="importBackup()">整份覆蓋還原（會取代現有資料，慎用）</button></div>
 <div class="card"><h2>長期使用提醒</h2><p class="hint">資料保存在此裝置、此瀏覽器的 localStorage，並非雲端。清除網站資料可能失去紀錄。若在 HTTPS 網址開啟本程式，可以加入手機主畫面並使用離線快取；單獨開啟 HTML 檔案不保證可安裝為 PWA。不同手機使用各自的瀏覽器儲存空間，記帳及統計互不影響；不會自動同步。</p><p class="hint">店家分類記憶：<span id="ruleCount">0</span> 家</p><div id="ruleList" class="hint"></div></div></section>
 <div id="categoryActionModal" class="cat-confirm-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="categoryActionHeading"><div class="cat-confirm-sheet"><h2 id="categoryActionHeading">確認分類操作</h2><p id="categoryActionMessage"></p><div class="cat-confirm-buttons"><button type="button" class="btn alt" id="catActionCancel">取消</button><button type="button" class="btn" id="catActionOK">確定</button></div></div></div>
 <div id="dateWheelModal" class="wheel-modal hidden" role="dialog" aria-modal="true" aria-label="滾輪選擇記帳日期"><div class="wheel-sheet"><div class="wheel-head"><button type="button" onclick="closeDateWheel()">取消</button><strong>選擇記帳日期</strong><button type="button" onclick="commitDateWheel()">完成</button></div><div class="wheel-fields"><div class="wheel-col"><span>年</span><div id="wheelYear" class="wheel-scroll" aria-label="年份"></div></div><div class="wheel-col"><span>月</span><div id="wheelMonth" class="wheel-scroll" aria-label="月份"></div></div><div class="wheel-col"><span>日</span><div id="wheelDay" class="wheel-scroll" aria-label="日期"></div></div></div><p id="wheelPreview" class="hint" style="text-align:center"></p></div></div>
@@ -569,6 +591,119 @@ function download(name,contents,type){let a=document.createElement('a'),url=URL.
 function exportBackup(){download(`小布記帳本完整備份_${localToday()}.json`,JSON.stringify(db,null,2),'application/json;charset=utf-8')}
 function csvCell(v){let s=String(v??'');if(/^[=+@\-\t\r]/.test(s)&&!/^-?\d+(\.\d+)?$/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
 function exportCSV(){let keys=['date','type','cat','subcat','amount','store','activityDate','travelName','destination','currency','rate','foreignAmount','installment.name','installment.index','installment.count','installment.total','source','invNo'],head=['日期','收支','分類','子項目','台幣金額','店家備註','活動開始日期','出國費用項目','出國地點','幣別','台幣匯率','當地金額','分期名稱','第幾期','總期數','分期總額','來源','發票號碼'];let rows=[head,...db.records.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(r=>keys.map(k=>{let v=k.startsWith('installment.')?r.installment?.[k.split('.')[1]]:r[k];return k==='type'?(v==='income'?'收入':'支出'):v??''}))];download(`小布記帳本全部帳目_${localToday()}.csv`,'\ufeff'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8')}
+
+/* V16 selective import: selection, category mapping, preservation, deduplication. */
+let pendingMergeData=null;
+let pendingMergeGroups=[];
+function mergeNorm(v){return String(v??'').normalize('NFKC').toLocaleLowerCase('zh-TW').replace(/[\s　_\-—－／/、，,.()（）]+/g,'')}
+function mergeSourceKey(r){
+  if(r.type==='income')return 'income|'+String(r.cat||'收入');
+  return 'expense|'+String(r.originalCategory||r.subcat||r.cat||'其他');
+}
+function mergeGuessMain(record,sourceName){
+  const sourceCat=String(record.cat||'').trim();
+  const choices=allCats().map(c=>c.n);
+  if(choices.includes(sourceCat))return sourceCat;
+  const query=mergeNorm(sourceName);
+  const exact=choices.find(n=>mergeNorm(n)===query);
+  if(exact)return exact;
+  const subMatches=choices.filter(cat=>(db.subNames[cat]||[]).some(sub=>mergeNorm(sub)===query));
+  return subMatches.length===1?subMatches[0]:(sourceCat||sourceName);
+}
+function mergeSuggestSub(cat,source){
+  const options=[...new Set([...(db.subNames[cat]||[]),...db.records.filter(r=>r.cat===cat&&r.subcat).map(r=>r.subcat)])];
+  const exact=options.find(x=>mergeNorm(x)===mergeNorm(source));
+  if(exact)return exact;
+  // Conservative synonyms: offer an editable suggestion, rather than silently fuzzy-matching everything.
+  const synonyms=[['在外吃飯','外食','餐廳','外出用餐'],['飲料','飲品','手搖飲'],['食品','食材','食物'],['汽油','加油','油錢'],['停車費','停車'],['日用品','生活用品'],['服飾','衣服'],['巴士/捷運','大眾運輸','公車捷運'],['機票','航空票'],['禮金','紅包']];
+  const group=synonyms.find(names=>names.some(x=>mergeNorm(x)===mergeNorm(source)));
+  const related=group&&options.find(x=>group.some(a=>mergeNorm(a)===mergeNorm(x)));
+  return related||source;
+}
+function mergeSourceSignature(r){
+  // Strong signature only for matching imported source data, not everyday same-price purchases.
+  return [r.source||'',r.id||''].join('|');
+}
+function validMergeBackup(d){return d&&Array.isArray(d.records)&&d.records.every(r=>r&&typeof r.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(r.date)&&['expense','income'].includes(r.type)&&Number.isFinite(Number(r.amount)))}
+function previewMergeFile(){
+  const file=$('mergeFile').files[0];
+  pendingMergeData=null;pendingMergeGroups=[];show('mergePreview',false);
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const d=JSON.parse(reader.result);
+      if(!validMergeBackup(d))throw Error('不符合小布記帳本 JSON 格式');
+      pendingMergeData=d;
+      const grouped=new Map();
+      d.records.forEach(r=>{
+        const key=mergeSourceKey(r),name=r.type==='income'?String(r.cat):String(r.originalCategory||r.subcat||r.cat||'其他');
+        if(!grouped.has(key))grouped.set(key,{key,name,type:r.type,count:0,sample:r});
+        grouped.get(key).count++;
+      });
+      pendingMergeGroups=[...grouped.values()].sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name,'zh-TW'));
+      $('mergeInfo').textContent=`讀取 ${d.records.length.toLocaleString('zh-TW')} 筆、${pendingMergeGroups.length} 組來源分類。可依需求勾選部分類別，且只會新增到目前資料。`;
+      const catOptions=[...new Set([...allCats().map(c=>c.n),...pendingMergeGroups.filter(g=>g.type==='expense').map(g=>String(g.sample.cat||g.name))])];
+      $('mergeGroups').innerHTML=pendingMergeGroups.map((g,i)=>{
+        const main=g.type==='expense'?mergeGuessMain(g.sample,g.name):'';
+        const sub=g.type==='expense'?mergeSuggestSub(main,g.name):'';
+        return `<div class="merge-group" data-merge-idx="${i}"><div class="merge-title"><input type="checkbox" class="merge-check" id="mergeCheck${i}"><label for="mergeCheck${i}">${esc(g.type==='income'?'收入 · '+g.name:g.name)}</label><small>${g.count.toLocaleString('zh-TW')} 筆</small></div>${g.type==='expense'?`<div class="merge-map"><div class="field"><label>匯入後主分類</label><select class="merge-cat" aria-label="${esc(g.name)} 的主分類">${catOptions.map(n=>`<option value="${esc(n)}" ${n===main?'selected':''}>${esc(n)}</option>`).join('')}<option value="__new__">＋自訂新主分類…</option></select></div><div class="field"><label>匯入後子項目</label><input class="merge-sub" value="${esc(sub)}" maxlength="80" aria-label="${esc(g.name)} 的子項目名稱" placeholder="選填，可合併至既有名稱"></div></div><div class="field merge-newcat hidden"><label>新主分類名稱</label><input class="merge-newcat-name" maxlength="40" placeholder="請輸入新分類名稱"></div>`:''}</div>`
+      }).join('');
+      $('mergeGroups').querySelectorAll('.merge-cat').forEach(sel=>sel.addEventListener('change',()=>{
+        const row=sel.closest('.merge-group');row.querySelector('.merge-newcat').classList.toggle('hidden',sel.value!=='__new__');
+        const g=pendingMergeGroups[Number(row.dataset.mergeIdx)];
+        if(sel.value!=='__new__')row.querySelector('.merge-sub').value=mergeSuggestSub(sel.value,g.name);
+      }));
+      $('mergeResult').textContent='請勾選要匯入的項目。';show('mergePreview',true);
+    }catch(e){toast('JSON 無法辨識：'+e.message)}
+  };
+  reader.onerror=()=>toast('讀取檔案失敗');
+  reader.readAsText(file,'UTF-8');
+}
+function selectMergeGroups(on){$('mergeGroups').querySelectorAll('.merge-check').forEach(ch=>ch.checked=on)}
+function commitMergeImport(){
+  if(!pendingMergeData){toast('請先選 JSON');return}
+  const selections=new Map();let selectedCount=0;
+  for(const row of $('mergeGroups').querySelectorAll('.merge-group')){
+    if(!row.querySelector('.merge-check').checked)continue;
+    const i=Number(row.dataset.mergeIdx),g=pendingMergeGroups[i];selectedCount++;
+    if(g.type==='income'){selections.set(g.key,{type:'income'});continue}
+    const select=row.querySelector('.merge-cat');
+    const cat=select.value==='__new__'?row.querySelector('.merge-newcat-name').value.trim():select.value;
+    const sub=row.querySelector('.merge-sub').value.trim();
+    if(!cat){toast('請補齊「'+g.name+'」的新分類名稱');return}
+    selections.set(g.key,{type:'expense',cat,sub});
+  }
+  if(!selectedCount){toast('請先勾選至少一個項目');return}
+  const currentIds=new Set(db.records.map(r=>String(r.id)));
+  // For previously imported legacy entries, source identifiers remain stable.
+  let added=0,skipped=0;const imported=[];
+  const newCustom=new Set(db.customCats),newSubs=structuredCloneSafe(db.subNames),newIncNames=new Set(db.incNames);
+  const knownMain=new Set([...EXP_CATS.map(c=>c.n),...db.customCats]);
+  for(const r of pendingMergeData.records){
+    const m=selections.get(mergeSourceKey(r));if(!m)continue;
+    const origId=String(r.id||'');
+    if(origId&&currentIds.has(origId)){skipped++;continue}
+    const copy={...r};
+    if(m.type==='expense'){
+      copy.cat=m.cat;copy.subcat=m.sub;
+      if(!knownMain.has(m.cat)){newCustom.add(m.cat);knownMain.add(m.cat)}
+      if(m.sub){newSubs[m.cat]=newSubs[m.cat]||[];if(!newSubs[m.cat].includes(m.sub))newSubs[m.cat].push(m.sub)}
+    }else newIncNames.add(copy.cat);
+    copy.id=origId||uid();
+    // Imported JSON already contains dated installments: do not expand them again.
+    imported.push(copy);currentIds.add(copy.id);added++;
+  }
+  const prev=db;
+  const next={...db,records:db.records.concat(imported),customCats:[...newCustom],subNames:newSubs,incNames:[...newIncNames],hiddenCats:db.hiddenCats.filter(n=>!newCustom.has(n))};
+  // Always preserve the recipient's app title, icons, location, rates, rules and preferences.
+  db=next;
+  if(!save()){db=prev;return}
+  $('mergeResult').textContent=`✅ 合併完成：新增 ${added.toLocaleString('zh-TW')} 筆、略過來源 ID 重複 ${skipped.toLocaleString('zh-TW')} 筆。原有 ${prev.records.length.toLocaleString('zh-TW')} 筆紀錄及設定保留。`;
+  render();toast(`已合併 ${added} 筆，保留原資料`);
+}
+function structuredCloneSafe(obj){const out={};for(const [k,v] of Object.entries(obj||{}))out[k]=Array.isArray(v)?v.slice():[];return out}
+
 function importBackup(){let f=$('backupFile').files[0];if(!f){toast('請先選擇 JSON 備份');return}let rd=new FileReader();rd.onload=e=>{try{let d=JSON.parse(e.target.result);if(!d||!Array.isArray(d.records)||!d.records.every(r=>r&&typeof r.date==='string'&&['expense','income'].includes(r.type)&&Number.isFinite(Number(r.amount))))throw Error('invalid');if(!confirm(`確定還原 ${d.records.length} 筆紀錄？目前全部資料將被覆蓋。`))return;db={...d,records:d.records,rules:d.rules||{},budget:d.budget||0,incNames:d.incNames||[],childNames:d.childNames||{},subNames:d.subNames||d.childNames||{},customCats:d.customCats||[],travelNames:d.travelNames||[],destinations:d.destinations||{},rateCache:d.rateCache||{},merchantIds:d.merchantIds||{},customCurrencies:d.customCurrencies||[]};if(save())location.reload()}catch(ex){toast('備份格式不正確')}};rd.readAsText(f,'UTF-8')}
 
 /* iPhone-style wheel date picker; selectedDate remains canonical for all records. */
