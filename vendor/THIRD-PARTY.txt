@@ -1,0 +1,19 @@
+Third-party components bundled for local execution
+
+jsQR 1.4.0 — Apache-2.0
+https://github.com/cozmo/jsQR
+License: JSQR-LICENSE
+
+Tesseract.js 6.0.1 — Apache-2.0
+https://github.com/naptha/tesseract.js
+License: ocr/TESSERACT-LICENSE.md and dist LICENSE.txt notices
+
+Tesseract.js-core 6.0.0 — Apache-2.0
+https://github.com/naptha/tesseract.js-core
+License: ocr/CORE-LICENSE
+
+Language models: @tesseract.js-data/chi_tra 1.0.0 and @tesseract.js-data/eng 1.0.0, 4.0.0_best_int
+https://github.com/naptha/tessdata
+Tesseract language data — Apache-2.0 (see ocr/CORE-LICENSE for license text)
+
+Only local URLs are used at runtime. No photo upload or third-party OCR endpoint is used.
