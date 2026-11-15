@@ -1,0 +1,13 @@
+(function(root){'use strict';
+const defaults=['餐食','日常生活','交通','衣服','娛樂','贈禮'];
+function validDate(value){const m=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return false;const y=+m[1],mo=+m[2],day=+m[3];return y>=1900&&y<=2100&&mo>=1&&mo<=12&&day>=1&&day<=new Date(Date.UTC(y,mo,0)).getUTCDate()}
+function prepaid(record){return record.type==='expense'&&(record.isPrepaid===true||(record.isPrepaid!==false&&validDate(record.activityDate)))}
+function dateFor(record,basis){return basis==='activity'&&prepaid(record)&&validDate(record.activityDate)?record.activityDate:record.date}
+function legacyCategory(cat,db={}){return cat==='預付'||!!db.prepayCat&&cat===db.prepayCat}
+const catId=cat=>'c:'+JSON.stringify(String(cat)),subId=(cat,sub)=>'s:'+JSON.stringify([String(cat),String(sub)]);
+function names(db,cat){return [...new Set([...(Array.isArray(db.subNames?.[cat])?db.subNames[cat]:[]),...(db.records||[]).filter(r=>r.cat===cat&&r.subcat).map(r=>r.subcat)])].sort((a,b)=>a.localeCompare(b,'zh-TW'))}
+function subOptions(db,categories){return [...categories].flatMap(cat=>{const values=names(db,cat);if((db.records||[]).some(r=>r.cat===cat&&!r.subcat))values.unshift('');return values.map(name=>({id:subId(cat,name),categoryId:catId(cat),cat,name}))})}
+const comparable=v=>String(v).normalize('NFKC').trim().toLocaleLowerCase('zh-TW');
+function addSub(db,cat,name){cat=String(cat||'').trim();name=String(name||'').trim();if(!cat||cat.length>40)throw Error('請先選擇或輸入有效的主分類');if(legacyCategory(cat,db))throw Error('預付是交易選項，請選擇一般費用主分類');if(!name||name.length>80)throw Error('請輸入1至80字的子分類名稱');const existing=names(db,cat).find(n=>comparable(n)===comparable(name)),chosen=existing||name;const stored=Array.isArray(db.subNames?.[cat])?db.subNames[cat]:[];if(stored.includes(chosen))return {next:db,name:chosen,created:false};const known=new Set([...defaults,...db.customCats||[]]);const customCats=known.has(cat)?[...db.customCats||[]]:[...db.customCats||[],cat];const subNames=Object.assign(Object.create(null),db.subNames||{});subNames[cat]=[...new Set([...stored,chosen])];return {next:{...db,customCats,subNames,hiddenCats:(db.hiddenCats||[]).filter(n=>n!==cat)},name:chosen,created:!existing}}
+const api={validDate,prepaid,dateFor,legacyCategory,catId,subId,names,subOptions,addSub};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.LedgerModel=api;
+})(globalThis);
