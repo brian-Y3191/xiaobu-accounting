@@ -1,4 +1,4 @@
-const VERSION='V30',CACHE='xiaobu-v30';
+const VERSION='V31',CACHE='xiaobu-v31';
 const ASSETS=['./index.html','./ledger-model.js','./subcategory-picker.js','./manifest.webmanifest','./icon-192.png','./icon-512.png','./app-update.js','./receipt-import-core.js','./receipt-import.js','./accounts-core.js','./accounts-tools.js','./invoice-core.js','./invoice-capture.js','./camera-compat.js','./receipt-photo-tools.js','./amount-keypad.js','./range-analysis.js','./vendor/jsQR.js','./vendor/ocr/tesseract.min.js'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(async cache=>{for(const url of ASSETS){const r=await fetch(new Request(url,{cache:'reload'}));if(!r.ok)throw Error(url);await cache.put(url,r)}})));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('xiaobu-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
